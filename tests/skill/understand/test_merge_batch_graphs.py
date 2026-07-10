@@ -1131,6 +1131,70 @@ class TestMultiPart(unittest.TestCase):
 # ── Unrecognized batch filename handling ───────────────────────────────────
 
 
+class TestIncrementalBatchExisting(unittest.TestCase):
+    """The documented incremental baseline file must be merged, not dropped."""
+
+    def setUp(self) -> None:
+        import tempfile
+        self.tmp = Path(tempfile.mkdtemp(prefix="ua-mbg-existing-"))
+        self.intermediate = self.tmp / ".understand-anything" / "intermediate"
+        self.intermediate.mkdir(parents=True, exist_ok=True)
+
+    def tearDown(self) -> None:
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _write_batch(self, name: str, nodes: list, edges: list) -> None:
+        import json as _j
+        (self.intermediate / name).write_text(
+            _j.dumps({"nodes": nodes, "edges": edges}),
+            encoding="utf-8",
+        )
+
+    def _run_merge(self) -> tuple[int, str, dict]:
+        import subprocess
+        import json as _j
+        result = subprocess.run(
+            [sys.executable, str(_MODULE_PATH), str(self.tmp)],
+            capture_output=True, text=True,
+        )
+        out_path = self.intermediate / "assembled-graph.json"
+        assembled = _j.loads(out_path.read_text(encoding="utf-8")) if out_path.exists() else {}
+        return result.returncode, result.stderr, assembled
+
+    def test_batch_existing_baseline_is_loaded_before_fresh_batches(self) -> None:
+        self._write_batch("batch-existing.json", [
+            _file_node("src/unchanged.ts"),
+            _file_node("src/shared.ts", summary="old baseline summary"),
+        ], [])
+        self._write_batch("batch-1.json", [
+            _file_node("src/new.ts"),
+            _file_node("src/shared.ts", summary="fresh summary"),
+        ], [
+            {
+                "source": "file:src/new.ts",
+                "target": "file:src/shared.ts",
+                "type": "imports",
+                "direction": "forward",
+                "weight": 0.7,
+            }
+        ])
+
+        rc, stderr, assembled = self._run_merge()
+
+        self.assertEqual(rc, 0)
+        self.assertNotIn("unrecognized filenames", stderr)
+        self.assertIn("batch-existing.json: 2 nodes, 0 edges", stderr)
+        node_by_id = {n["id"]: n for n in assembled["nodes"]}
+        self.assertEqual(
+            set(node_by_id),
+            {"file:src/unchanged.ts", "file:src/shared.ts", "file:src/new.ts"},
+        )
+        self.assertEqual(node_by_id["file:src/shared.ts"]["summary"], "fresh summary")
+        edge_keys = {(e["source"], e["target"], e["type"]) for e in assembled["edges"]}
+        self.assertIn(("file:src/new.ts", "file:src/shared.ts", "imports"), edge_keys)
+
+
 class TestUnrecognizedBatchFilename(unittest.TestCase):
     """File-analyzer fuses multiple batches into one output (e.g.,
     `batch-fused-8-13.json`, `batch-8-13.json`) — the merge script's regex

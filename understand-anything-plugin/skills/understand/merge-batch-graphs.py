@@ -135,6 +135,30 @@ def _num(v: Any) -> float:
         return 0.0
 
 
+def parse_batch_filename(name: str) -> tuple[int, int | None] | None:
+    """Return the logical batch index and optional part number for a batch file.
+
+    Incremental updates write the pruned baseline graph as `batch-existing.json`;
+    treat it as a real batch that sorts before freshly analyzed numeric batches.
+    """
+    if name == "batch-existing.json":
+        return (-1, None)
+
+    match = re.match(r"batch-(\d+)(?:-part-(\d+))?\.json", name)
+    if match is None:
+        return None
+    return (int(match.group(1)), int(match.group(2)) if match.group(2) else None)
+
+
+def batch_sort_key(path: Path) -> tuple[int, int, str]:
+    parsed = parse_batch_filename(path.name)
+    if parsed is None:
+        return (sys.maxsize, sys.maxsize, path.name)
+
+    batch_index, part_number = parsed
+    return (batch_index, part_number or 0, path.name)
+
+
 # ── Batch loading ─────────────────────────────────────────────────────────
 
 def load_batch(path: Path) -> dict[str, Any] | None:
@@ -1037,12 +1061,12 @@ def main() -> None:
         print(f"Error: {intermediate_dir} does not exist", file=sys.stderr)
         sys.exit(1)
 
-    # Discover batch files, sorted by numeric index (not lexicographic)
+    # Discover batch files, sorted by numeric index (not lexicographic).
+    # `batch-existing.json` is the documented incremental baseline and must
+    # sort before fresh batches so fresh duplicate nodes/edges win later.
     batch_files = sorted(
         intermediate_dir.glob("batch-*.json"),
-        key=lambda p: int(re.search(r"batch-(\d+)", p.stem).group(1))
-        if re.search(r"batch-(\d+)", p.stem)
-        else 0,
+        key=batch_sort_key,
     )
     if not batch_files:
         print("Error: no batch-*.json files found in intermediate/", file=sys.stderr)
@@ -1050,19 +1074,20 @@ def main() -> None:
 
     # Group by logical batch index so the report distinguishes single-batch
     # files from multi-part file-analyzer outputs. Files that don't match the
-    # `batch-<N>.json` / `batch-<N>-part-<K>.json` pattern (e.g. fused
-    # `batch-fused-8-13.json`, range `batch-8-13.json`) would otherwise be
-    # silently dropped during load — flag them loudly instead so the user
-    # can fix the file-analyzer agent.
+    # `batch-existing.json` / `batch-<N>.json` / `batch-<N>-part-<K>.json`
+    # pattern (e.g. fused `batch-fused-8-13.json`, range `batch-8-13.json`)
+    # would otherwise be silently dropped during load — flag them loudly
+    # instead so the user can fix the file-analyzer agent.
     from collections import defaultdict as _dd
     by_batch = _dd(list)
     unrecognized_batch_files: list[str] = []
     for f in batch_files:
-        m = re.match(r"batch-(\d+)(?:-part-(\d+))?\.json", f.name)
-        if m:
-            by_batch[int(m.group(1))].append((f.name, int(m.group(2)) if m.group(2) else None))
-        else:
+        parsed = parse_batch_filename(f.name)
+        if parsed is None:
             unrecognized_batch_files.append(f.name)
+        else:
+            batch_index, part_number = parsed
+            by_batch[batch_index].append((f.name, part_number))
 
     if unrecognized_batch_files:
         preview = ", ".join(unrecognized_batch_files[:5])
