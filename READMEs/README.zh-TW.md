@@ -115,7 +115,7 @@ Understand Anything 是一個 [Claude Code Plugin](https://code.claude.com/docs/
 /understand
 ```
 
-多智能體（multi-agent）架構會：掃描你的專案，提取函式 / 類別 / 相依關係，建構知識圖譜並儲存至 `.understand-anything/knowledge-graph.json`。
+多智能體（multi-agent）架構會：掃描你的專案，提取函式 / 類別 / 相依關係，建構知識圖譜並儲存至 `.ua/knowledge-graph.json`。（已經有 `.understand-anything/` 目錄的專案會繼續使用它——存在時它仍是資料目錄，因此無需遷移。）
 
 > **關於 Token 消耗的提醒：** 首次執行 `/understand` 會分析整個程式碼庫，在大型專案上可能消耗大量 token。建議在有 token 方案 / 訂閱的情況下執行，或在初始化時使用本地模型（見上文）。後續執行預設為增量式——只重新分析變更過的檔案——因此消耗的 token 大幅減少。
 
@@ -264,11 +264,11 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 > **範例：** [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) —— 包含已提交圖譜的 Go / Java / Python / Node 多語言參考專案。
 
-**需要提交的內容：** `.understand-anything/` 底下的全部檔案，*除了* `intermediate/` 與 `diff-overlay.json`（這些是本機暫存檔）。
+**需要提交的內容：** `.ua/` 底下的全部檔案，*除了* `intermediate/` 與 `diff-overlay.json`（這些是本機暫存檔）。（舊專案使用 `.understand-anything/`——如果存在的是該目錄，請將下方的目錄名稱替換為它。）
 
 ```gitignore
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+.ua/intermediate/
+.ua/diff-overlay.json
 ```
 
 **保持最新：** 啟用 `/understand --auto-update` —— 一個 post-commit 掛鉤會增量更新圖譜，讓每次提交都有對應的圖譜版本。也可以在發布前手動重跑 `/understand`。
@@ -277,8 +277,8 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 ```bash
 git lfs install
-git lfs track ".understand-anything/*.json"
-git add .gitattributes .understand-anything/
+git lfs track ".ua/*.json"
+git add .gitattributes .ua/
 ```
 
 ---

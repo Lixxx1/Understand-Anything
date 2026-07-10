@@ -116,7 +116,7 @@ Understand Anything — это [плагин для Claude Code](https://code.cl
 /understand
 ```
 
-Мультиагентный пайплайн сканирует ваш проект, извлекает каждый файл, функцию, класс и зависимость, а затем строит граф знаний и сохраняет его в `.understand-anything/knowledge-graph.json`.
+Мультиагентный пайплайн сканирует ваш проект, извлекает каждый файл, функцию, класс и зависимость, а затем строит граф знаний и сохраняет его в `.ua/knowledge-graph.json`. (Проекты, в которых уже есть каталог `.understand-anything/`, продолжают использовать его — при наличии он остаётся каталогом данных, поэтому ничего мигрировать не нужно.)
 
 > **Обратите внимание на расход токенов:** Первый запуск `/understand` анализирует всю кодовую базу и может потреблять значительное количество токенов на больших проектах. Рекомендуем запускать его с тарифным планом / подпиской на токены или использовать локальную модель (см. выше) для инициализации. Последующие запуски по умолчанию инкрементальны — повторно анализируются только изменённые файлы — поэтому расходуют гораздо меньше токенов.
 
@@ -265,11 +265,11 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 > **Пример:** [GoogleCloudPlatform/microservices-demo (форк)](https://github.com/GoogleCloudPlatform/microservices-demo) — мультиязыковой проект (Go / Java / Python / Node) с уже зафиксированным графом.
 
-**Что коммитить:** всё содержимое `.understand-anything/`, *кроме* `intermediate/` и `diff-overlay.json` (это локальные временные файлы).
+**Что коммитить:** всё содержимое `.ua/`, *кроме* `intermediate/` и `diff-overlay.json` (это локальные временные файлы). (Устаревшие проекты используют `.understand-anything/` — подставьте это имя каталога ниже, если присутствует именно он.)
 
 ```gitignore
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+.ua/intermediate/
+.ua/diff-overlay.json
 ```
 
 **Держите граф в актуальном состоянии:** включите `/understand --auto-update` — post-commit хук будет инкрементально обновлять граф, так что каждый коммит сопровождается соответствующим графом. Либо запускайте `/understand` вручную перед релизами.
@@ -278,8 +278,8 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 ```bash
 git lfs install
-git lfs track ".understand-anything/*.json"
-git add .gitattributes .understand-anything/
+git lfs track ".ua/*.json"
+git add .gitattributes .ua/
 ```
 
 ---

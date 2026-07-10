@@ -115,7 +115,7 @@ Apunta `/understand-knowledge` a un [wiki LLM con patrón Karpathy](https://gist
 /understand
 ```
 
-Un pipeline multi-agente escanea tu proyecto, extrae cada archivo, función, clase y dependencia, y construye un grafo de conocimiento guardado en `.understand-anything/knowledge-graph.json`.
+Un pipeline multi-agente escanea tu proyecto, extrae cada archivo, función, clase y dependencia, y construye un grafo de conocimiento guardado en `.ua/knowledge-graph.json`. (Los proyectos que ya tienen un directorio `.understand-anything/` lo siguen usando: sigue siendo el directorio de datos cuando está presente, así que no hay que migrar nada.)
 
 > **Aviso sobre el consumo de tokens:** El primer `/understand` analiza todo tu código y puede consumir una cantidad significativa de tokens en proyectos grandes. Recomendamos ejecutarlo con un plan / suscripción de tokens, o usar un modelo local (ver arriba) para la inicialización. Las ejecuciones posteriores son incrementales por defecto — solo se reanalizan los archivos modificados — por lo que usan muchos menos tokens.
 
@@ -264,11 +264,11 @@ El grafo es solo JSON — **confírmalo una vez y tus compañeros se saltan el p
 
 > **Ejemplo:** [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) — referencia políglota (Go / Java / Python / Node) con el grafo ya confirmado.
 
-**Qué confirmar:** todo lo que hay en `.understand-anything/` *excepto* `intermediate/` y `diff-overlay.json` (archivos temporales locales).
+**Qué confirmar:** todo lo que hay en `.ua/` *excepto* `intermediate/` y `diff-overlay.json` (archivos temporales locales). (Los proyectos heredados usan `.understand-anything/`: sustituye ese nombre de directorio abajo si es el que está presente.)
 
 ```gitignore
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+.ua/intermediate/
+.ua/diff-overlay.json
 ```
 
 **Mantenlo al día:** activa `/understand --auto-update` — un hook post-commit parchea el grafo de forma incremental, así cada commit llega con su grafo correspondiente. O vuelve a ejecutar `/understand` manualmente antes de cada release.
@@ -277,8 +277,8 @@ El grafo es solo JSON — **confírmalo una vez y tus compañeros se saltan el p
 
 ```bash
 git lfs install
-git lfs track ".understand-anything/*.json"
-git add .gitattributes .understand-anything/
+git lfs track ".ua/*.json"
+git add .gitattributes .ua/
 ```
 
 ---

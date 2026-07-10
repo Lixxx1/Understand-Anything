@@ -115,7 +115,7 @@ Understand Anything은 [Claude Code Plugin](https://code.claude.com/docs/en/plug
 /understand
 ```
 
-멀티 에이전트 파이프라인이 프로젝트를 스캔하고, 모든 파일, 함수, 클래스, 의존성을 추출한 뒤, `.understand-anything/knowledge-graph.json`에 지식 그래프를 저장합니다.
+멀티 에이전트 파이프라인이 프로젝트를 스캔하고, 모든 파일, 함수, 클래스, 의존성을 추출한 뒤, `.ua/knowledge-graph.json`에 지식 그래프를 저장합니다. (이미 `.understand-anything/` 디렉터리가 있는 프로젝트는 계속 그것을 사용합니다. 존재하는 경우 그것이 데이터 디렉터리로 유지되므로 마이그레이션이 필요 없습니다.)
 
 > **토큰 사용량 안내:** 최초 `/understand`는 전체 코드베이스를 분석하므로 대규모 프로젝트에서는 상당한 토큰을 소비할 수 있습니다. 토큰 요금제 / 구독으로 실행하거나, 초기화에는 로컬 모델(위 참조)을 사용하는 것을 권장합니다. 이후 실행은 기본적으로 증분 방식이라 변경된 파일만 다시 분석하므로 훨씬 적은 토큰을 사용합니다.
 
@@ -264,11 +264,11 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 > **예시:** [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) — 커밋된 그래프를 포함한 Go / Java / Python / Node 레퍼런스 프로젝트.
 
-**커밋할 대상:** `.understand-anything/` 내부의 모든 파일. 단, `intermediate/` 와 `diff-overlay.json` 은 제외합니다 (이들은 로컬 임시 파일입니다).
+**커밋할 대상:** `.ua/` 내부의 모든 파일. 단, `intermediate/` 와 `diff-overlay.json` 은 제외합니다 (이들은 로컬 임시 파일입니다). (레거시 프로젝트는 `.understand-anything/` 를 사용합니다. 해당 디렉터리가 있는 경우 아래의 디렉터리 이름을 그것으로 바꾸세요.)
 
 ```gitignore
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+.ua/intermediate/
+.ua/diff-overlay.json
 ```
 
 **최신 상태 유지:** `/understand --auto-update` 를 활성화하면 post-commit 훅이 그래프를 증분 업데이트하여 각 커밋마다 일치하는 그래프가 유지됩니다. 또는 릴리스 전에 `/understand` 를 수동으로 다시 실행하세요.
@@ -277,8 +277,8 @@ curl -fsSL https://raw.githubusercontent.com/Egonex-AI/Understand-Anything/main/
 
 ```bash
 git lfs install
-git lfs track ".understand-anything/*.json"
-git add .gitattributes .understand-anything/
+git lfs track ".ua/*.json"
+git add .gitattributes .ua/
 ```
 
 ---
